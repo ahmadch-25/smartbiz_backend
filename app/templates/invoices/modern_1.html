@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Invoice - Modern Professional</title>
+  <style>
+    @page {
+    size: A4;
+    margin: 12mm;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      color: #1f2937;
+      background: #f5f7fb;
+      padding: 40px 0;
+    }
+
+    .invoice-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    }
+
+    .header {
+      background: #1d4ed8;
+      color: #ffffff;
+      padding: 40px 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+    }
+
+    .brand h1 {
+      font-size: 30px;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+
+    .brand p {
+      font-size: 14px;
+      opacity: 0.95;
+      line-height: 1.6;
+    }
+
+    .invoice-meta {
+      text-align: right;
+    }
+
+    .invoice-meta h2 {
+      font-size: 34px;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+
+    .invoice-meta p {
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .content {
+    padding: 20px 24px;
+    }   
+
+    .billing-section {
+      display: flex;
+      justify-content: space-between;
+      gap: 40px;
+      margin-bottom: 35px;
+    }
+
+    .billing-box {
+      width: 48%;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: bold;
+      color: #2563eb;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .billing-box p {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #374151;
+    }
+
+    table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    }
+
+    thead {
+      background: #eff6ff;
+    }
+
+    th {
+      text-align: left;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: #1d4ed8;
+      text-transform: uppercase;
+      border-bottom: 1px solid #dbeafe;
+    }
+
+    td {
+      padding: 16px;
+      font-size: 14px;
+      border-bottom: 1px solid #e5e7eb;
+      color: #374151;
+    }
+
+    td.text-right,
+    th.text-right {
+      text-align: right;
+    }
+
+    th, td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    }
+
+    .summary {
+      width: 340px;
+      margin-left: auto;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      font-size: 15px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .summary-row.total {
+      font-size: 20px;
+      font-weight: bold;
+      color: #1d4ed8;
+      border-bottom: none;
+      padding-top: 16px;
+    }
+
+    .notes {
+      margin-top: 35px;
+      padding: 18px 20px;
+      background: #f9fafb;
+      border-radius: 10px;
+    }
+
+    .notes h4 {
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: #111827;
+    }
+
+    .notes p {
+      font-size: 14px;
+      color: #4b5563;
+      line-height: 1.6;
+    }
+
+    .footer {
+      padding: 22px 50px;
+      background: #f9fafb;
+      border-top: 1px solid #e5e7eb;
+      font-size: 13px;
+      color: #6b7280;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice-container">
+    <div class="header">
+      <div class="brand">
+        <h1>{{ company.name }}</h1>
+        <p>
+          {{ company.address }}<br />
+          {{ company.email }}<br />
+          {{ company.phone }}
+        </p>
+      </div>
+      <div class="invoice-meta">
+        <h2>INVOICE</h2>
+        <p><strong>Invoice #:</strong> {{ invoice.number }}</p>
+        <p><strong>Issue Date:</strong> {{ invoice.issue_date }}</p>
+        <p><strong>Due Date:</strong> {{ invoice.due_date }}</p>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="billing-section">
+        <div class="billing-box">
+          <div class="section-title">Bill From</div>
+          <p>
+            <strong>{{ company.name }}</strong><br />
+            {{ company.address }}<br />
+            {{ company.email }}<br />
+            {{ company.phone }}
+          </p>
+        </div>
+
+        <div class="billing-box">
+          <div class="section-title">Bill To</div>
+          <p>
+            <strong>{{ client.name }}</strong><br />
+            {{ client.address }}<br />
+            {{ client.email }}<br />
+            {{ client.phone }}
+          </p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Description</th>
+            <th class="text-right">Qty</th>
+            <th class="text-right">Unit Price</th>
+            <th class="text-right">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.description }}</td>
+            <td class="text-right">{{ item.quantity }}</td>
+            <td class="text-right">{{ item.unit_price }}</td>
+            <td class="text-right">{{ item.total }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="summary">
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span>{{ totals.subtotal }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Tax</span>
+          <span>{{ totals.tax }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Discount</span>
+          <span>{{ totals.discount }}</span>
+        </div>
+        <div class="summary-row total">
+          <span>Grand Total</span>
+          <span>{{ totals.grand_total }}</span>
+        </div>
+      </div>
+
+      <div class="notes">
+        <h4>Notes</h4>
+        <p>{{ invoice.notes }}</p>
+      </div>
+    </div>
+
+    <div class="footer">
+      Thank you for your business.
+    </div>
+  </div>
+</body>
+</html>
