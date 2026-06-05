@@ -109,6 +109,6 @@ def root():
 def health_check():
     return {
         "status": True,
-        "message": "success",
+        "message": "health success",
         "result": {"status": "ok"},
     }

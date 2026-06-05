@@ -1,0 +1,78 @@
+name: Deploy FastAPI Backend
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: smartbiz-backend-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Ubuntu Server
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Deploy over SSH
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST_KEY: ${{ secrets.SSH_HOST_KEY }}
+
+          APP_DIR: ${{ secrets.APP_DIR }}
+          APP_BRANCH: ${{ secrets.APP_BRANCH }}
+          SERVICE_NAME: ${{ secrets.SERVICE_NAME }}
+
+        run: |
+          set -euo pipefail
+
+          : "${SSH_PORT:=22}"
+          : "${APP_BRANCH:=main}"
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          printf '%s\n' "$SSH_HOST_KEY" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+          ssh \
+            -i ~/.ssh/deploy_key \
+            -p "$SSH_PORT" \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            "$SSH_USER@$SSH_HOST" \
+            APP_DIR="$APP_DIR" \
+            APP_BRANCH="$APP_BRANCH" \
+            SERVICE_NAME="$SERVICE_NAME" \
+            'bash -s' <<'EOF'
+          set -euo pipefail
+
+          cd "$APP_DIR"
+
+          echo "Current commit:"
+          git rev-parse --short HEAD
+
+          git fetch origin "$APP_BRANCH"
+          git reset --hard "origin/$APP_BRANCH"
+
+          uv sync --frozen --no-dev
+
+          # Uncomment this if you use Alembic migrations
+          # uv run alembic upgrade head
+
+          sudo systemctl restart "$SERVICE_NAME"
+          sudo systemctl status "$SERVICE_NAME" --no-pager
+
+          echo "Deployed commit:"
+          git rev-parse --short HEAD
+          EOF
