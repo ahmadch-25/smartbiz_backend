@@ -65,6 +65,7 @@ jobs:
           git fetch origin "$APP_BRANCH"
           git reset --hard "origin/$APP_BRANCH"
 
+          export PATH="$HOME/.local/bin:$PATH"
           uv sync --frozen --no-dev
 
           # Uncomment this if you use Alembic migrations
