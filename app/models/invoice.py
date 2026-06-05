@@ -17,9 +17,9 @@ class Invoice(Base):
     __tablename__ = "invoices"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    client_id: Mapped[int] = mapped_column(
+    client_id: Mapped[int | None] = mapped_column(
         ForeignKey("clients.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
         index=True,
     )
     invoice_number: Mapped[str] = mapped_column(
@@ -39,7 +39,7 @@ class Invoice(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     template_key: Mapped[str | None] = mapped_column(String(80), nullable=True)
 
-    client_name: Mapped[str] = mapped_column(String(150), nullable=False)
+    client_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
     client_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     client_phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
     client_address: Mapped[str | None] = mapped_column(String(500), nullable=True)

@@ -7,6 +7,7 @@ from app.schemas.api_response import ApiResponse
 
 
 class PaymentRecordCreate(BaseModel):
+    invoice_id: int | None = None
     amount: Decimal = Field(..., gt=0, max_digits=12, decimal_places=2)
     payment_date: date
     payment_method: str | None = Field(default=None, max_length=80)
@@ -18,7 +19,7 @@ class PaymentRecordOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    invoice_id: int
+    invoice_id: int | None
     amount: Decimal
     payment_date: date
     payment_method: str | None

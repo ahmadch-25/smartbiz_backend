@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.params import Query
 from sqlalchemy.orm import Session
@@ -110,7 +112,7 @@ def create_invoice_payment(
     db: Session = Depends(get_db),
 ):
     try:
-        payment = payment_service.create_payment(db, invoice_id, payload)
+        payment = payment_service.create_payment(db, payload, invoice_id=invoice_id)
     except invoice_service.InvoiceNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -136,7 +138,7 @@ def list_invoice_payments(invoice_id: int, db: Session = Depends(get_db)):
 @router.get("/{invoice_id}/preview-pdf")
 def preview_invoice_pdf(
     invoice_id: int,
-    template_key: str = Query(...),
+    template_key: Annotated[str, Query()],
     db: Session = Depends(get_db),
     pdf_service: PdfService = Depends(get_pdf_service),
 ):
@@ -163,7 +165,5 @@ def preview_invoice_pdf(
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={
-            "Content-Disposition": f'inline; filename="{filename}"'
-        },
+        headers={"Content-Disposition": f'inline; filename="{filename}"'},
     )

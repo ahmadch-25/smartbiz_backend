@@ -15,9 +15,9 @@ class PaymentRecord(Base):
     __tablename__ = "payment_records"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    invoice_id: Mapped[int] = mapped_column(
+    invoice_id: Mapped[int | None] = mapped_column(
         ForeignKey("invoices.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
         index=True,
     )
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
@@ -37,4 +37,4 @@ class PaymentRecord(Base):
         onupdate=func.now(),
     )
 
-    invoice: Mapped["Invoice"] = relationship(back_populates="payments")
+    invoice: Mapped["Invoice | None"] = relationship(back_populates="payments")

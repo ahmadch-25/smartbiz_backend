@@ -18,7 +18,7 @@ class InvoiceItemCreate(BaseModel):
 
 
 class InvoiceCreate(BaseModel):
-    client_id: int
+    client_id: int | None
     issue_date: date
     due_date: date
     notes: str | None = None
@@ -64,14 +64,14 @@ class InvoiceOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    client_id: int
+    client_id: int | None
     invoice_number: str
     issue_date: date
     due_date: date
     status: str
     notes: str | None
     template_key: str | None
-    client_name: str
+    client_name: str | None
     client_email: str | None
     client_phone: str | None
     client_address: str | None
