@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
+from app.dependencies import get_device_id
 from app.schemas.api_response import ApiResponse
 from app.schemas.payment_record import (
     PaymentRecordCreate,
@@ -17,9 +18,13 @@ router = APIRouter(prefix="/payments", tags=["Payments"])
 @router.post(
     "", response_model=PaymentRecordResponse, status_code=status.HTTP_201_CREATED
 )
-def create_payment(payload: PaymentRecordCreate, db: Session = Depends(get_db)):
+def create_payment(
+    payload: PaymentRecordCreate,
+    db: Session = Depends(get_db),
+    device_id: str = Depends(get_device_id),
+):
     try:
-        payment = payment_service.create_payment(db, payload)
+        payment = payment_service.create_payment(db, payload, device_id)
     except invoice_service.InvoiceNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -30,14 +35,21 @@ def create_payment(payload: PaymentRecordCreate, db: Session = Depends(get_db)):
 
 
 @router.get("", response_model=PaymentRecordListResponse)
-def list_payments(db: Session = Depends(get_db)):
-    payments = payment_service.get_payments(db)
+def list_payments(
+    db: Session = Depends(get_db),
+    device_id: str = Depends(get_device_id),
+):
+    payments = payment_service.get_payments(db, device_id)
     return ApiResponse(status=True, message="success", result=payments)
 
 
 @router.get("/{payment_id}", response_model=PaymentRecordResponse)
-def get_payment(payment_id: int, db: Session = Depends(get_db)):
-    payment = payment_service.get_payment(db, payment_id)
+def get_payment(
+    payment_id: int,
+    db: Session = Depends(get_db),
+    device_id: str = Depends(get_device_id),
+):
+    payment = payment_service.get_payment(db, payment_id, device_id)
     if payment is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -11,10 +11,39 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+
+    env:
+      ENV: test
+      # Add test env vars here if your app needs them.
+      # Example:
+      # DATABASE_URL: sqlite:///./test.db
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Run unit tests
+        run: uv run --frozen pytest -q
+
   deploy:
     name: Deploy to Ubuntu Server
     runs-on: ubuntu-latest
     environment: production
+    needs: test
 
     steps:
       - name: Deploy over SSH

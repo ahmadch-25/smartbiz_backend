@@ -17,6 +17,7 @@ class Invoice(Base):
     __tablename__ = "invoices"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    device_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     client_id: Mapped[int | None] = mapped_column(
         ForeignKey("clients.id", ondelete="RESTRICT"),
         nullable=True,

@@ -26,6 +26,8 @@ from app.schemas.ai_invoice import (
 )
 from app.services import ai_invoice_service
 
+DEVICE_ID = "11111111-1111-1111-1111-111111111111"
+
 
 def make_session() -> Session:
     engine = create_engine("sqlite+pysqlite:///:memory:")
@@ -63,6 +65,7 @@ def test_ai_invoice_draft_creates_client_and_invoice(monkeypatch):
     result = ai_invoice_service.build_ai_invoice_draft(
         db,
         "sell 30 soap $5 each and 20 toys $10 each to toseef",
+        DEVICE_ID,
     )
 
     assert result.invoice is not None
@@ -97,6 +100,7 @@ def test_ai_invoice_draft_allows_missing_client(monkeypatch):
     result = ai_invoice_service.build_ai_invoice_draft(
         db,
         "sell 30 soap $5 each",
+        DEVICE_ID,
     )
 
     assert result.invoice is not None
@@ -130,6 +134,7 @@ def test_ai_invoice_draft_missing_product_needs_confirmation(monkeypatch):
     result = ai_invoice_service.build_ai_invoice_draft(
         db,
         "sell 30 something $5 each to toseef",
+        DEVICE_ID,
     )
 
     assert result.invoice is None
@@ -185,6 +190,7 @@ def test_old_database_not_null_client_id_returns_clear_error(monkeypatch):
         "clients",
         metadata,
         Column("id", Integer, primary_key=True),
+        Column("device_id", String(36), nullable=False),
         Column("name", String(150), nullable=False),
         Column("email", String(255), nullable=True),
         Column("phone", String(50), nullable=True),
@@ -196,6 +202,7 @@ def test_old_database_not_null_client_id_returns_clear_error(monkeypatch):
         "invoices",
         metadata,
         Column("id", Integer, primary_key=True),
+        Column("device_id", String(36), nullable=False),
         Column("client_id", Integer, ForeignKey("clients.id"), nullable=False),
         Column("invoice_number", String(40), nullable=False, unique=True),
         Column("issue_date", Date, nullable=False),
@@ -218,6 +225,7 @@ def test_old_database_not_null_client_id_returns_clear_error(monkeypatch):
         "invoice_items",
         metadata,
         Column("id", Integer, primary_key=True),
+        Column("device_id", String(36), nullable=False),
         Column("invoice_id", Integer, ForeignKey("invoices.id"), nullable=False),
         Column("product_name", String(200), nullable=False),
         Column("description", Text, nullable=True),
@@ -231,6 +239,7 @@ def test_old_database_not_null_client_id_returns_clear_error(monkeypatch):
         "payment_records",
         metadata,
         Column("id", Integer, primary_key=True),
+        Column("device_id", String(36), nullable=False),
         Column("invoice_id", Integer, ForeignKey("invoices.id"), nullable=False),
         Column("amount", Numeric(12, 2), nullable=False),
         Column("payment_date", Date, nullable=False),
@@ -260,7 +269,11 @@ def test_old_database_not_null_client_id_returns_clear_error(monkeypatch):
     )
 
     with pytest.raises(ai_invoice_service.AiInvoiceDraftError) as exc:
-        ai_invoice_service.build_ai_invoice_draft(db, "sell 30 shower set")
+        ai_invoice_service.build_ai_invoice_draft(
+            db,
+            "sell 30 shower set",
+            DEVICE_ID,
+        )
 
     assert "alembic upgrade head" in str(exc.value)
 

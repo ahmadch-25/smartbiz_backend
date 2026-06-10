@@ -7,6 +7,7 @@ from typing import Any
 from langchain_anthropic import ChatAnthropic
 from langchain_ollama import ChatOllama
 from pydantic import SecretStr, ValidationError
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -243,19 +244,25 @@ def has_blocking_item_issues(missing_fields: list[str]) -> bool:
 def create_draft_invoice_from_extraction(
     db: Session,
     extracted: ExtractedInvoiceData,
+    device_id: str,
 ) -> Invoice:
     if not extracted.items:
         raise AiInvoiceDraftError("At least one invoice item is required")
 
     client: Client | None = None
     if extracted.client_id is not None:
-        client = db.get(Client, extracted.client_id)
+        client = db.scalar(
+            select(Client).where(
+                Client.id == extracted.client_id,
+                Client.device_id == device_id,
+            )
+        )
         if client is None:
             raise AiInvoiceDraftError(
                 "Extracted client_id does not match an existing client"
             )
     elif extracted.client_name:
-        client = Client(name=extracted.client_name)
+        client = Client(name=extracted.client_name, device_id=device_id)
         db.add(client)
         db.flush()
 
@@ -273,6 +280,7 @@ def create_draft_invoice_from_extraction(
 
         invoice_items.append(
             InvoiceItem(
+                device_id=device_id,
                 product_name=item.product_name,
                 description=item.description,
                 quantity=quantity,
@@ -284,6 +292,7 @@ def create_draft_invoice_from_extraction(
     today = date.today()
     subtotal = quantize_money(subtotal)
     invoice = Invoice(
+        device_id=device_id,
         client_id=client.id if client else None,
         invoice_number=generate_invoice_number(db),
         issue_date=today,
@@ -321,6 +330,7 @@ def create_draft_invoice_from_extraction(
 def build_ai_invoice_draft(
     db: Session,
     text: str,
+    device_id: str,
 ) -> AiInvoiceDraftResult:
     extracted = extract_invoice_data(text)
     missing_fields, confirmation_options = get_extraction_issues(extracted)
@@ -335,7 +345,7 @@ def build_ai_invoice_draft(
             invoice=None,
         )
 
-    invoice = create_draft_invoice_from_extraction(db, extracted)
+    invoice = create_draft_invoice_from_extraction(db, extracted, device_id)
 
     return AiInvoiceDraftResult(
         needs_confirmation=needs_confirmation,

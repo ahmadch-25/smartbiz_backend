@@ -15,6 +15,7 @@ class PaymentRecord(Base):
     __tablename__ = "payment_records"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    device_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     invoice_id: Mapped[int | None] = mapped_column(
         ForeignKey("invoices.id", ondelete="CASCADE"),
         nullable=True,

@@ -5,7 +5,7 @@ from fastapi.params import Query
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
-from app.dependencies import get_pdf_service
+from app.dependencies import get_device_id, get_pdf_service
 from app.schemas.api_response import ApiResponse
 from app.schemas.invoice import (
     InvoiceCreate,
@@ -25,9 +25,13 @@ router = APIRouter(prefix="/invoices", tags=["Invoices"])
 
 
 @router.post("", response_model=InvoiceResponse, status_code=status.HTTP_201_CREATED)
-def create_invoice(payload: InvoiceCreate, db: Session = Depends(get_db)):
+def create_invoice(
+    payload: InvoiceCreate,
+    db: Session = Depends(get_db),
+    device_id: str = Depends(get_device_id),
+):
     try:
-        invoice = invoice_service.create_invoice(db, payload)
+        invoice = invoice_service.create_invoice(db, payload, device_id)
     except invoice_service.ClientNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -43,14 +47,21 @@ def create_invoice(payload: InvoiceCreate, db: Session = Depends(get_db)):
 
 
 @router.get("", response_model=InvoiceListResponse)
-def list_invoices(db: Session = Depends(get_db)):
-    invoices = invoice_service.get_invoices(db)
+def list_invoices(
+    db: Session = Depends(get_db),
+    device_id: str = Depends(get_device_id),
+):
+    invoices = invoice_service.get_invoices(db, device_id)
     return ApiResponse(status=True, message="success", result=invoices)
 
 
 @router.get("/{invoice_id}", response_model=InvoiceResponse)
-def get_invoice(invoice_id: int, db: Session = Depends(get_db)):
-    invoice = invoice_service.get_invoice_with_details(db, invoice_id)
+def get_invoice(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+    device_id: str = Depends(get_device_id),
+):
+    invoice = invoice_service.get_invoice_with_details(db, invoice_id, device_id)
     if invoice is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -64,9 +75,10 @@ def update_invoice(
     invoice_id: int,
     payload: InvoiceUpdate,
     db: Session = Depends(get_db),
+    device_id: str = Depends(get_device_id),
 ):
     try:
-        invoice = invoice_service.update_invoice(db, invoice_id, payload)
+        invoice = invoice_service.update_invoice(db, invoice_id, payload, device_id)
     except invoice_service.InvalidInvoiceError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -86,8 +98,12 @@ def update_invoice(
     response_model=ApiResponse[dict],
     status_code=status.HTTP_200_OK,
 )
-def delete_invoice(invoice_id: int, db: Session = Depends(get_db)):
-    deleted = invoice_service.delete_invoice(db, invoice_id)
+def delete_invoice(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+    device_id: str = Depends(get_device_id),
+):
+    deleted = invoice_service.delete_invoice(db, invoice_id, device_id)
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -110,9 +126,12 @@ def create_invoice_payment(
     invoice_id: int,
     payload: PaymentRecordCreate,
     db: Session = Depends(get_db),
+    device_id: str = Depends(get_device_id),
 ):
     try:
-        payment = payment_service.create_payment(db, payload, invoice_id=invoice_id)
+        payment = payment_service.create_payment(
+            db, payload, device_id, invoice_id=invoice_id
+        )
     except invoice_service.InvoiceNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -123,9 +142,13 @@ def create_invoice_payment(
 
 
 @router.get("/{invoice_id}/payments", response_model=PaymentRecordListResponse)
-def list_invoice_payments(invoice_id: int, db: Session = Depends(get_db)):
+def list_invoice_payments(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+    device_id: str = Depends(get_device_id),
+):
     try:
-        payments = payment_service.get_invoice_payments(db, invoice_id)
+        payments = payment_service.get_invoice_payments(db, invoice_id, device_id)
     except invoice_service.InvoiceNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -141,8 +164,9 @@ def preview_invoice_pdf(
     template_key: Annotated[str, Query()],
     db: Session = Depends(get_db),
     pdf_service: PdfService = Depends(get_pdf_service),
+    device_id: str = Depends(get_device_id),
 ):
-    invoice = invoice_service.get_invoice_with_details(db, invoice_id)
+    invoice = invoice_service.get_invoice_with_details(db, invoice_id, device_id)
     if not invoice:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -11,6 +11,8 @@ from app.models.invoice import Invoice
 from app.schemas.payment_record import PaymentRecordCreate
 from app.services import payment_service
 
+DEVICE_ID = "11111111-1111-1111-1111-111111111111"
+
 
 def make_session() -> Session:
     engine = create_engine("sqlite+pysqlite:///:memory:")
@@ -20,8 +22,9 @@ def make_session() -> Session:
 
 
 def create_invoice(db: Session, total: Decimal = Decimal("100.00")) -> Invoice:
-    client = Client(name="Toseef")
+    client = Client(name="Toseef", device_id=DEVICE_ID)
     invoice = Invoice(
+        device_id=DEVICE_ID,
         client=client,
         invoice_number="INV-TEST-1",
         issue_date=date(2026, 6, 5),
@@ -51,6 +54,7 @@ def test_invoice_payment_updates_status_to_partially_paid_then_paid():
             payment_date=date(2026, 6, 5),
             payment_method="cash",
         ),
+        DEVICE_ID,
     )
     db.refresh(invoice)
 
@@ -65,6 +69,7 @@ def test_invoice_payment_updates_status_to_partially_paid_then_paid():
             payment_date=date(2026, 6, 6),
             payment_method="cash",
         ),
+        DEVICE_ID,
     )
     db.refresh(invoice)
 
@@ -83,6 +88,7 @@ def test_standalone_payment_record_does_not_require_invoice():
             payment_method="cash",
             notes="Personal payment record",
         ),
+        DEVICE_ID,
     )
 
     assert payment.id is not None
