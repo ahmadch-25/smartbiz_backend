@@ -12,6 +12,7 @@ from app.db.database import engine
 from app.routers.invoice_templates import router as invoice_templates_router
 from app.routers.ai_invoices import router as ai_invoices_router
 from app.routers.clients import router as clients_router
+from app.routers.company_settings import router as company_settings_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.invoices import router as invoices_router
 from app.routers.payments import router as payments_router
@@ -39,6 +40,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(ai_invoices_router)
 app.include_router(clients_router)
+app.include_router(company_settings_router)
 app.include_router(dashboard_router)
 app.include_router(invoices_router)
 app.include_router(invoice_templates_router)
