@@ -18,6 +18,7 @@ from app.schemas.payment_record import (
     PaymentRecordListResponse,
     PaymentRecordResponse,
 )
+from app.services import company_settings_service
 from app.services import invoice_service, payment_service
 from app.services.pdf_service import PdfService
 
@@ -174,9 +175,11 @@ def preview_invoice_pdf(
         )
 
     try:
+        company_settings = company_settings_service.get_company_settings(db, device_id)
         pdf_bytes = pdf_service.generate_invoice_pdf(
             invoice=invoice,
             template_key=template_key,
+            company_settings=company_settings,
         )
     except ValueError as exc:
         raise HTTPException(

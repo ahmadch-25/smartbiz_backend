@@ -33,6 +33,14 @@
       font-weight: 700;
     }
 
+    .company-logo {
+      max-width: 110px;
+      max-height: 65px;
+      object-fit: contain;
+      margin-bottom: 12px;
+      display: block;
+    }
+
     .brand p,
     .meta p,
     .party p,
@@ -138,6 +146,9 @@
   <div class="invoice">
     <div class="top">
       <div class="brand">
+        {% if company.logo_url %}
+        <img class="company-logo" src="{{ company.logo_url }}" alt="{{ company.name }} logo" />
+        {% endif %}
         <h1>{{ company.name }}</h1>
         <p>{{ company.address }}</p>
         <p>{{ company.email }}</p>
@@ -155,6 +166,9 @@
     <div class="parties">
       <div class="party">
         <h3>From</h3>
+        {% if company.logo_url %}
+        <img class="company-logo" src="{{ company.logo_url }}" alt="{{ company.name }} logo" />
+        {% endif %}
         <p><strong>{{ company.name }}</strong></p>
         <p>{{ company.address }}</p>
         <p>{{ company.email }}</p>

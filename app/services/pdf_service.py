@@ -19,14 +19,14 @@ class PdfService:
             autoescape=select_autoescape(["html", "xml"]),
         )
 
-    def generate_invoice_pdf(self, invoice, template_key: str) -> bytes:
+    def generate_invoice_pdf(self, invoice, template_key: str, company_settings=None) -> bytes:
         template_file = TEMPLATE_FILES.get(template_key)
         if not template_file:
             raise ValueError("Invalid template key.")
 
         template = self.env.get_template(template_file)
 
-        context = self._build_invoice_context(invoice)
+        context = self._build_invoice_context(invoice, company_settings)
 
         html_content = template.render(**context)
 
@@ -37,7 +37,7 @@ class PdfService:
 
         return pdf_bytes
 
-    def _build_invoice_context(self, invoice) -> dict:
+    def _build_invoice_context(self, invoice, company_settings=None) -> dict:
         items = []
         for item in invoice.items:
             items.append(
@@ -50,12 +50,35 @@ class PdfService:
                 }
             )
 
+        company_name = "SmartBiz"
+        company_address = "Your Company Address"
+        company_email = "billing@smartbiz.com"
+        company_phone = "+1 000 000 0000"
+        company_logo_url = None
+        company_website = None
+        company_tax_number = None
+        company_registration_number = None
+
+        if company_settings is not None:
+            company_name = company_settings.company_name or company_name
+            company_address = company_settings.address or company_address
+            company_email = company_settings.email or company_email
+            company_phone = company_settings.phone or company_phone
+            company_logo_url = company_settings.logo_url
+            company_website = company_settings.website
+            company_tax_number = company_settings.tax_number
+            company_registration_number = company_settings.registration_number
+
         return {
             "company": {
-                "name": "SmartBiz",
-                "address": "Your Company Address",
-                "email": "billing@smartbiz.com",
-                "phone": "+1 000 000 0000",
+                "name": company_name,
+                "address": company_address,
+                "email": company_email,
+                "phone": company_phone,
+                "logo_url": company_logo_url,
+                "website": company_website,
+                "tax_number": company_tax_number,
+                "registration_number": company_registration_number,
             },
             "client": {
                 "name": invoice.client_name,

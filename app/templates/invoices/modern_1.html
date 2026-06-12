@@ -43,6 +43,14 @@
       letter-spacing: 1px;
     }
 
+    .company-logo {
+      max-width: 120px;
+      max-height: 70px;
+      object-fit: contain;
+      margin-bottom: 12px;
+      display: block;
+    }
+
     .brand p {
       font-size: 14px;
       opacity: 0.95;
@@ -184,6 +192,9 @@
   <div class="invoice-container">
     <div class="header">
       <div class="brand">
+        {% if company.logo_url %}
+        <img class="company-logo" src="{{ company.logo_url }}" alt="{{ company.name }} logo" />
+        {% endif %}
         <h1>{{ company.name }}</h1>
         <p>
           {{ company.address }}<br />
@@ -204,6 +215,9 @@
         <div class="billing-box">
           <div class="section-title">Bill From</div>
           <p>
+            {% if company.logo_url %}
+            <img class="company-logo" src="{{ company.logo_url }}" alt="{{ company.name }} logo" />
+            {% endif %}
             <strong>{{ company.name }}</strong><br />
             {{ company.address }}<br />
             {{ company.email }}<br />

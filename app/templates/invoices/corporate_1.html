@@ -44,6 +44,14 @@
       margin-bottom: 12px;
     }
 
+    .company-logo {
+      max-width: 130px;
+      max-height: 75px;
+      object-fit: contain;
+      margin-bottom: 14px;
+      display: block;
+    }
+
     .company-details,
     .client-box p,
     .footer p {
@@ -187,6 +195,9 @@
   <div class="page">
     <div class="header">
       <div class="header-left">
+        {% if company.logo_url %}
+        <img class="company-logo" src="{{ company.logo_url }}" alt="{{ company.name }} logo" />
+        {% endif %}
         <div class="company-name">{{ company.name }}</div>
         <div class="company-details">
           {{ company.address }}<br />
@@ -208,6 +219,9 @@
         <div class="client-box">
           <h3>Billed From</h3>
           <p>
+            {% if company.logo_url %}
+            <img class="company-logo" src="{{ company.logo_url }}" alt="{{ company.name }} logo" />
+            {% endif %}
             <strong>{{ company.name }}</strong><br />
             {{ company.address }}<br />
             {{ company.email }}<br />
