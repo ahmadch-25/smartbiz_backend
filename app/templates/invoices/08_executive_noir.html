@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+{% set gold = accent_color | default('#B99348', true) %}
+{% set noir = '#17181C' %}
+<style>
+  @page {
+    size: A4;
+    margin: 0 0 20mm 0;
+    background: #FDFCFA;
+    @bottom-center {
+      content: "{{ company.name }}   ·   Invoice {{ invoice.number }}   ·   Page " counter(page) " of " counter(pages);
+      font-family: Inter, Arial, sans-serif; font-size: 7pt; letter-spacing: 1.5pt; text-transform: uppercase; color: #9b9483;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Inter, "Helvetica Neue", Arial, sans-serif; font-size: 9.5pt; color: #26272c; line-height: 1.55; }
+  .serif { font-family: "EB Garamond", Georgia, serif; }
+
+  .masthead { background: {{ noir }}; color: #ECE7DC; padding: 10mm 18mm 8mm; }
+  .mast-top { display: flex; justify-content: space-between; align-items: center; }
+  .brand { display: flex; align-items: center; gap: 5mm; }
+  .logo { height: 14mm; }
+  .cname { font-size: 17pt; letter-spacing: 1pt; color: #fff; }
+  .gold-rule { border: none; border-top: 0.8pt solid {{ gold }}; margin: 4.5mm 0 3.5mm; opacity: 0.9; }
+  .mast-bottom { display: flex; justify-content: space-between; font-size: 8pt; color: #A9A28E; }
+  .mast-title { text-align: right; }
+  .mast-title h1 { font-size: 24pt; font-weight: 400; letter-spacing: 6pt; text-transform: uppercase; color: {{ gold }}; }
+  .mast-title .no { font-size: 9pt; letter-spacing: 2pt; color: #ECE7DC; margin-top: 1mm; }
+
+  .content { padding: 8mm 18mm 0; }
+  .parties { display: flex; justify-content: space-between; margin-bottom: 7mm; }
+  .label { font-size: 6.8pt; letter-spacing: 2.4pt; text-transform: uppercase; color: {{ gold }}; font-weight: 600; margin-bottom: 1.8mm; }
+  .party .name { font-size: 13pt; }
+  .party .meta { font-size: 8.5pt; color: #6d6e74; }
+  .kv { text-align: right; font-size: 9pt; }
+  .kv td { padding: 0.7mm 0 0.7mm 8mm; }
+  .kv .k { color: #8b8c92; font-size: 7pt; letter-spacing: 1.6pt; text-transform: uppercase; }
+  .kv .v { font-weight: 600; }
+
+  table.items { width: 100%; border-collapse: collapse; }
+  table.items thead { display: table-header-group; }
+  table.items th {
+    font-size: 6.8pt; letter-spacing: 2.2pt; text-transform: uppercase; color: {{ noir }}; font-weight: 600;
+    text-align: left; padding: 0 2mm 2.4mm 0; border-bottom: 1.2pt solid {{ noir }};
+  }
+  table.items td { padding: 3mm 2mm 3mm 0; border-bottom: 0.4pt solid #ddd6c8; vertical-align: top; }
+  .item-name { font-family: "EB Garamond", Georgia, serif; font-size: 11.5pt; }
+  .item-details { font-size: 8.2pt; color: #83848a; margin-top: 0.6mm; }
+  .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  th.num { text-align: right; }
+
+  .bottom { display: flex; justify-content: space-between; margin-top: 6mm; page-break-inside: avoid; }
+  .notes { width: 48%; font-size: 8.3pt; color: #6d6e74; }
+  .notes h4 { font-size: 6.8pt; letter-spacing: 2.4pt; text-transform: uppercase; color: {{ gold }}; font-weight: 600; margin: 4.5mm 0 1.2mm; }
+  .notes h4:first-child { margin-top: 0; }
+
+  .totals-wrap { width: 46%; }
+  table.totals { width: 100%; border-collapse: collapse; }
+  table.totals td { padding: 1.8mm 0; }
+  table.totals .k { color: #6d6e74; }
+  table.totals .v { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .grand-band { background: {{ noir }}; color: #fff; padding: 4.5mm 6mm; margin-top: 3mm; display: flex; justify-content: space-between; align-items: baseline; }
+  .grand-band .k { font-size: 7pt; letter-spacing: 2.6pt; text-transform: uppercase; color: {{ gold }}; font-weight: 600; }
+  .grand-band .v { font-family: "EB Garamond", Georgia, serif; font-size: 19pt; }
+  .balance-line { display: flex; justify-content: space-between; padding: 2.6mm 6mm 0; font-weight: 600; }
+</style>
+</head>
+<body>
+
+  <div class="masthead">
+    <div class="mast-top">
+      <div class="brand">
+        {% if company.logo_url %}<img class="logo" src="{{ company.logo_url }}">{% endif %}
+        <div class="cname serif">{{ company.name }}</div>
+      </div>
+      <div class="mast-title">
+        <h1 class="serif">Invoice</h1>
+        <div class="no">{{ invoice.number }}</div>
+      </div>
+    </div>
+    <hr class="gold-rule">
+    <div class="mast-bottom">
+      <div>{{ company.address_lines | join('  ·  ') }}</div>
+      <div>{% if company.email %}{{ company.email }}{% endif %}{% if company.phone %}   ·   {{ company.phone }}{% endif %}{% if company.tax_id %}   ·   {{ company.tax_id }}{% endif %}</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="parties">
+      <div class="party">
+        <div class="label">Prepared for</div>
+        <div class="name serif">{{ client.name }}</div>
+        <div class="meta">
+          {% for line in client.address_lines %}{{ line }}<br>{% endfor %}
+          {% if client.email %}{{ client.email }}{% endif %}
+          {% if client.tax_id %}<br>{{ client.tax_id }}{% endif %}
+        </div>
+      </div>
+      <table class="kv">
+        <tr><td class="k">Date of issue</td><td class="v">{{ invoice.issue_date }}</td></tr>
+        <tr><td class="k">Payment due</td><td class="v">{{ invoice.due_date }}</td></tr>
+        {% if invoice.po_number %}<tr><td class="k">Reference</td><td class="v">{{ invoice.po_number }}</td></tr>{% endif %}
+      </table>
+    </div>
+
+    <table class="items">
+      <thead>
+        <tr>
+          <th style="width:54%">Description of services</th>
+          <th class="num">Qty</th>
+          <th class="num">Rate</th>
+          <th class="num">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td>
+            <div class="item-name">{{ item.description }}</div>
+            {% if item.details %}<div class="item-details">{{ item.details }}</div>{% endif %}
+          </td>
+          <td class="num">{{ item.quantity }}{% if item.unit %} {{ item.unit }}{% endif %}</td>
+          <td class="num">{{ invoice.currency }}{{ '{:,.2f}'.format(item.unit_price) }}</td>
+          <td class="num">{{ invoice.currency }}{{ '{:,.2f}'.format(item.amount) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="bottom">
+      <div class="notes">
+        {% if invoice.payment_details %}
+        <h4>Remittance</h4>
+        {% if invoice.payment_details.method_label %}{{ invoice.payment_details.method_label }}<br>{% endif %}
+        {% for line in invoice.payment_details.lines %}{{ line }}<br>{% endfor %}
+        {% endif %}
+        {% if invoice.notes %}<h4>With thanks</h4>{{ invoice.notes }}{% endif %}
+        {% if invoice.terms %}<h4>Terms</h4>{{ invoice.terms }}{% endif %}
+      </div>
+      <div class="totals-wrap">
+        <table class="totals">
+          <tr><td class="k">Subtotal</td><td class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.subtotal) }}</td></tr>
+          {% if totals.discount %}<tr><td class="k">{{ totals.discount_label | default('Discount', true) }}</td><td class="v">-{{ invoice.currency }}{{ '{:,.2f}'.format(totals.discount) }}</td></tr>{% endif %}
+          {% if totals.tax %}<tr><td class="k">{{ totals.tax_label | default('Tax', true) }}</td><td class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.tax) }}</td></tr>{% endif %}
+          {% if totals.shipping %}<tr><td class="k">Shipping</td><td class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.shipping) }}</td></tr>{% endif %}
+        </table>
+        <div class="grand-band"><span class="k">Total due</span><span class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.total) }}</span></div>
+        {% if totals.amount_paid %}
+        <div class="balance-line"><span>Paid -{{ invoice.currency }}{{ '{:,.2f}'.format(totals.amount_paid) }}</span><span>Balance {{ invoice.currency }}{{ '{:,.2f}'.format(totals.balance_due) }}</span></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

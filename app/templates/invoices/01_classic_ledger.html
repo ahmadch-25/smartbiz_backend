@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+{% set accent = accent_color | default('#1A1A1A', true) %}
+<style>
+  @page {
+    size: A4;
+    margin: 14mm 16mm 18mm 16mm;
+    @bottom-center {
+      content: "Page " counter(page) " of " counter(pages);
+      font-family: "EB Garamond", Georgia, serif;
+      font-size: 8.5pt; color: #777;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "EB Garamond", Georgia, "Times New Roman", serif; font-size: 10.5pt; color: #1a1a1a; line-height: 1.45; }
+
+  .header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .logo { height: 18mm; }
+  .company-name { font-size: 17pt; letter-spacing: 0.5pt; }
+  .company-meta { font-size: 9.5pt; color: #555; margin-top: 2mm; }
+  .doc-title { text-align: right; }
+  .doc-title h1 { font-size: 26pt; font-weight: normal; letter-spacing: 5pt; text-transform: uppercase; color: {{ accent }}; }
+  .doc-title .no { font-size: 10.5pt; color: #555; margin-top: 1.5mm; }
+
+  .rule-double { border-top: 2.2pt solid #1a1a1a; border-bottom: 0.6pt solid #1a1a1a; height: 1.6mm; margin: 5mm 0 5mm; }
+
+  .parties { display: flex; justify-content: space-between; }
+  .party { width: 46%; }
+  .label { font-size: 8pt; letter-spacing: 2pt; text-transform: uppercase; color: #888; margin-bottom: 1.6mm; }
+  .party .name { font-size: 12pt; font-weight: bold; }
+  .party .meta { font-size: 9.5pt; color: #444; }
+  .invoice-meta { text-align: right; font-size: 9.5pt; }
+  .invoice-meta td { padding: 0.6mm 0 0.6mm 6mm; }
+  .invoice-meta .k { color: #888; font-style: italic; }
+
+  table.items { width: 100%; border-collapse: collapse; margin-top: 6mm; }
+  table.items thead { display: table-header-group; }
+  table.items th {
+    font-size: 8pt; letter-spacing: 1.6pt; text-transform: uppercase; font-weight: normal;
+    color: #555; text-align: left; padding: 0 2mm 2mm 0;
+    border-bottom: 1.4pt solid #1a1a1a;
+  }
+  table.items td { padding: 2.6mm 2mm 2.6mm 0; border-bottom: 0.5pt solid #ccc; vertical-align: top; }
+  .item-name { font-weight: bold; }
+  .item-details { font-size: 9pt; color: #666; font-style: italic; margin-top: 0.8mm; }
+  .num { text-align: right; white-space: nowrap; }
+  th.num { text-align: right; }
+
+  .bottom { display: flex; justify-content: space-between; margin-top: 5mm; page-break-inside: avoid; }
+  .left-notes { width: 52%; font-size: 9.5pt; color: #444; }
+  .left-notes h4 { font-size: 8pt; letter-spacing: 2pt; text-transform: uppercase; color: #888; font-weight: normal; margin: 4mm 0 1.2mm; }
+  .left-notes h4:first-child { margin-top: 0; }
+
+  table.totals { width: 40%; border-collapse: collapse; }
+  table.totals td { padding: 1.6mm 0; font-size: 10.5pt; }
+  table.totals .k { color: #555; }
+  table.totals .v { text-align: right; white-space: nowrap; }
+  tr.grand td { border-top: 1.4pt solid #1a1a1a; border-bottom: 2.2pt double #1a1a1a; font-size: 13pt; font-weight: bold; padding: 2.4mm 0; }
+  tr.balance td { font-weight: bold; }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      {% if company.logo_url %}<img class="logo" src="{{ company.logo_url }}">{% endif %}
+      <div class="company-name">{{ company.name }}</div>
+      <div class="company-meta">
+        {% for line in company.address_lines %}{{ line }}<br>{% endfor %}
+        {% if company.email %}{{ company.email }}{% endif %}{% if company.phone %} · {{ company.phone }}{% endif %}
+        {% if company.tax_id %}<br>{{ company.tax_id }}{% endif %}
+      </div>
+    </div>
+    <div class="doc-title">
+      <h1>Invoice</h1>
+      <div class="no">№ {{ invoice.number }}</div>
+    </div>
+  </div>
+
+  <div class="rule-double"></div>
+
+  <div class="parties">
+    <div class="party">
+      <div class="label">Billed To</div>
+      <div class="name">{{ client.name }}</div>
+      <div class="meta">
+        {% for line in client.address_lines %}{{ line }}<br>{% endfor %}
+        {% if client.email %}{{ client.email }}<br>{% endif %}
+        {% if client.tax_id %}{{ client.tax_id }}{% endif %}
+      </div>
+    </div>
+    <table class="invoice-meta">
+      <tr><td class="k">Issue date</td><td>{{ invoice.issue_date }}</td></tr>
+      <tr><td class="k">Due date</td><td>{{ invoice.due_date }}</td></tr>
+      {% if invoice.po_number %}<tr><td class="k">PO number</td><td>{{ invoice.po_number }}</td></tr>{% endif %}
+    </table>
+  </div>
+
+  <table class="items">
+    <thead>
+      <tr>
+        <th style="width:52%">Description</th>
+        <th class="num">Qty</th>
+        <th class="num">Rate</th>
+        <th class="num">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>
+          <div class="item-name">{{ item.description }}</div>
+          {% if item.details %}<div class="item-details">{{ item.details }}</div>{% endif %}
+        </td>
+        <td class="num">{{ item.quantity }}{% if item.unit %} {{ item.unit }}{% endif %}</td>
+        <td class="num">{{ invoice.currency }}{{ '{:,.2f}'.format(item.unit_price) }}</td>
+        <td class="num">{{ invoice.currency }}{{ '{:,.2f}'.format(item.amount) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="bottom">
+    <div class="left-notes">
+      {% if invoice.payment_details %}
+      <h4>Payment</h4>
+      {% if invoice.payment_details.method_label %}{{ invoice.payment_details.method_label }}<br>{% endif %}
+      {% for line in invoice.payment_details.lines %}{{ line }}<br>{% endfor %}
+      {% endif %}
+      {% if invoice.notes %}<h4>Notes</h4>{{ invoice.notes }}{% endif %}
+      {% if invoice.terms %}<h4>Terms</h4>{{ invoice.terms }}{% endif %}
+    </div>
+    <table class="totals">
+      <tr><td class="k">Subtotal</td><td class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.subtotal) }}</td></tr>
+      {% if totals.discount %}<tr><td class="k">{{ totals.discount_label | default('Discount', true) }}</td><td class="v">-{{ invoice.currency }}{{ '{:,.2f}'.format(totals.discount) }}</td></tr>{% endif %}
+      {% if totals.tax %}<tr><td class="k">{{ totals.tax_label | default('Tax', true) }}</td><td class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.tax) }}</td></tr>{% endif %}
+      {% if totals.shipping %}<tr><td class="k">Shipping</td><td class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.shipping) }}</td></tr>{% endif %}
+      <tr class="grand"><td>Total</td><td class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.total) }}</td></tr>
+      {% if totals.amount_paid %}
+      <tr><td class="k">Amount paid</td><td class="v">-{{ invoice.currency }}{{ '{:,.2f}'.format(totals.amount_paid) }}</td></tr>
+      <tr class="balance"><td>Balance due</td><td class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.balance_due) }}</td></tr>
+      {% endif %}
+    </table>
+  </div>
+
+</body>
+</html>

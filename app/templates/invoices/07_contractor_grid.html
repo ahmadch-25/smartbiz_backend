@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+{% set accent = accent_color | default('#B45309', true) %}
+{% set ink = '#1B1B1B' %}
+<style>
+  @page {
+    size: A4;
+    margin: 12mm;
+    @bottom-center { content: "Page " counter(page) " of " counter(pages); font-family: "Open Sans Condensed", "Open Sans", Arial, sans-serif; font-size: 8pt; color: #888; }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Open Sans", Arial, sans-serif; font-size: 9pt; color: {{ ink }}; line-height: 1.45; }
+  .cond { font-family: "Open Sans Condensed", "Open Sans", Arial, sans-serif; }
+
+  .frame { border: 2.2pt solid {{ ink }}; }
+  .head { display: flex; border-bottom: 2.2pt solid {{ ink }}; }
+  .head .brand { flex: 1; padding: 5mm 6mm; display: flex; align-items: center; gap: 4mm; }
+  .logo { height: 15mm; }
+  .cname { font-size: 16pt; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5pt; }
+  .cmeta { font-size: 7.8pt; color: #555; margin-top: 0.6mm; }
+  .head .stamp { width: 58mm; border-left: 2.2pt solid {{ ink }}; background: {{ accent }}; color: #fff; padding: 5mm 6mm; text-align: center; }
+  .stamp h1 { font-size: 19pt; font-weight: 800; letter-spacing: 3pt; text-transform: uppercase; }
+  .stamp .no { font-size: 9.5pt; font-weight: 700; margin-top: 1mm; }
+
+  .grid-row { display: flex; border-bottom: 2.2pt solid {{ ink }}; }
+  .cellbox { padding: 3.5mm 6mm; border-right: 1pt solid {{ ink }}; }
+  .cellbox:last-child { border-right: none; }
+  .label { font-size: 6.5pt; letter-spacing: 1.8pt; text-transform: uppercase; color: {{ accent }}; font-weight: 800; margin-bottom: 1mm; }
+  .cellbox .v { font-weight: 700; font-size: 10pt; }
+  .cellbox .meta { font-size: 8.2pt; color: #555; }
+
+  table.items { width: 100%; border-collapse: collapse; }
+  table.items thead { display: table-header-group; }
+  table.items th {
+    border-bottom: 2.2pt solid {{ ink }}; border-right: 1pt solid {{ ink }};
+    font-size: 7pt; letter-spacing: 1.6pt; text-transform: uppercase; text-align: left;
+    padding: 2.6mm 4mm; font-weight: 800; background: #F2F2F0;
+  }
+  table.items th:last-child, table.items td:last-child { border-right: none; }
+  table.items td { padding: 2.8mm 4mm; border-bottom: 0.6pt solid #c9c9c4; border-right: 1pt solid {{ ink }}; vertical-align: top; }
+  .item-name { font-weight: 700; }
+  .item-details { font-size: 7.8pt; color: #666; }
+  .num { text-align: right; white-space: nowrap; }
+  th.num { text-align: right; }
+
+  .foot { display: flex; border-top: 2.2pt solid {{ ink }}; page-break-inside: avoid; }
+  .foot .notes { flex: 1; padding: 4mm 6mm; font-size: 8pt; color: #444; border-right: 2.2pt solid {{ ink }}; }
+  .foot .notes h4 { font-size: 6.5pt; letter-spacing: 1.8pt; text-transform: uppercase; color: {{ accent }}; margin: 3mm 0 0.8mm; font-weight: 800; }
+  .foot .notes h4:first-child { margin-top: 0; }
+  .foot .totals { width: 70mm; }
+  .foot .totals table { width: 100%; border-collapse: collapse; }
+  .foot .totals td { padding: 2mm 5mm; border-bottom: 0.6pt solid #c9c9c4; }
+  .foot .totals .k { color: #555; font-size: 8.5pt; }
+  .foot .totals .v { text-align: right; font-weight: 700; white-space: nowrap; }
+  tr.grand td { background: {{ ink }}; color: #fff; font-size: 12pt; font-weight: 800; border-bottom: none; padding: 3mm 5mm; }
+  tr.balance td { background: {{ accent }}; color: #fff; font-weight: 800; border-bottom: none; }
+
+  .sign { display: flex; gap: 10mm; margin-top: 8mm; page-break-inside: avoid; }
+  .sign .box { flex: 1; border-top: 1.2pt solid {{ ink }}; padding-top: 1.5mm; font-size: 7pt; letter-spacing: 1.6pt; text-transform: uppercase; color: #666; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <div class="head">
+    <div class="brand">
+      {% if company.logo_url %}<img class="logo" src="{{ company.logo_url }}">{% endif %}
+      <div>
+        <div class="cname cond">{{ company.name }}</div>
+        <div class="cmeta">
+          {{ company.address_lines | join(' · ') }}<br>
+          {% if company.phone %}{{ company.phone }}{% endif %}{% if company.email %} · {{ company.email }}{% endif %}{% if company.tax_id %} · {{ company.tax_id }}{% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="stamp">
+      <h1 class="cond">Invoice</h1>
+      <div class="no">{{ invoice.number }}</div>
+    </div>
+  </div>
+
+  <div class="grid-row">
+    <div class="cellbox" style="flex:1.5">
+      <div class="label">Bill to</div>
+      <div class="v">{{ client.name }}</div>
+      <div class="meta">{{ client.address_lines | join(', ') }}{% if client.email %}<br>{{ client.email }}{% endif %}</div>
+    </div>
+    <div class="cellbox" style="flex:0.8"><div class="label">Issue date</div><div class="v">{{ invoice.issue_date }}</div></div>
+    <div class="cellbox" style="flex:0.8"><div class="label">Due date</div><div class="v">{{ invoice.due_date }}</div></div>
+    {% if invoice.po_number %}<div class="cellbox" style="flex:0.6"><div class="label">PO / Job</div><div class="v">{{ invoice.po_number }}</div></div>{% endif %}
+  </div>
+
+  <table class="items">
+    <thead>
+      <tr>
+        <th style="width:50%">Work / Materials</th>
+        <th class="num">Qty</th>
+        <th class="num">Unit price</th>
+        <th class="num">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>
+          <div class="item-name">{{ item.description }}</div>
+          {% if item.details %}<div class="item-details">{{ item.details }}</div>{% endif %}
+        </td>
+        <td class="num">{{ item.quantity }}{% if item.unit %} {{ item.unit }}{% endif %}</td>
+        <td class="num">{{ invoice.currency }}{{ '{:,.2f}'.format(item.unit_price) }}</td>
+        <td class="num">{{ invoice.currency }}{{ '{:,.2f}'.format(item.amount) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="foot">
+    <div class="notes">
+      {% if invoice.payment_details %}
+      <h4>Payment</h4>
+      {% if invoice.payment_details.method_label %}{{ invoice.payment_details.method_label }}<br>{% endif %}
+      {% for line in invoice.payment_details.lines %}{{ line }}<br>{% endfor %}
+      {% endif %}
+      {% if invoice.notes %}<h4>Notes</h4>{{ invoice.notes }}{% endif %}
+      {% if invoice.terms %}<h4>Terms</h4>{{ invoice.terms }}{% endif %}
+    </div>
+    <div class="totals">
+      <table>
+        <tr><td class="k">Subtotal</td><td class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.subtotal) }}</td></tr>
+        {% if totals.discount %}<tr><td class="k">{{ totals.discount_label | default('Discount', true) }}</td><td class="v">-{{ invoice.currency }}{{ '{:,.2f}'.format(totals.discount) }}</td></tr>{% endif %}
+        {% if totals.tax %}<tr><td class="k">{{ totals.tax_label | default('Tax', true) }}</td><td class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.tax) }}</td></tr>{% endif %}
+        {% if totals.shipping %}<tr><td class="k">Shipping</td><td class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.shipping) }}</td></tr>{% endif %}
+        <tr class="grand"><td>TOTAL</td><td class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.total) }}</td></tr>
+        {% if totals.amount_paid %}
+        <tr><td class="k">Paid</td><td class="v">-{{ invoice.currency }}{{ '{:,.2f}'.format(totals.amount_paid) }}</td></tr>
+        <tr class="balance"><td>BALANCE DUE</td><td class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.balance_due) }}</td></tr>
+        {% endif %}
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="sign">
+  <div class="box">Authorized by</div>
+  <div class="box">Accepted by client</div>
+  <div class="box">Date</div>
+</div>
+
+</body>
+</html>

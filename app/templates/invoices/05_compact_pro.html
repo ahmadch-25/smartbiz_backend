@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+{% set accent = accent_color | default('#1D4ED8', true) %}
+<style>
+  @page {
+    size: A4;
+    margin: 12mm 12mm 18mm 12mm;
+    @bottom-left { content: "{{ company.name }} · {{ invoice.number }}"; font-family: Roboto, Arial, sans-serif; font-size: 7pt; color: #999; }
+    @bottom-right { content: "Page " counter(page) " of " counter(pages); font-family: Roboto, Arial, sans-serif; font-size: 7pt; color: #999; }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Roboto, "Segoe UI", Arial, sans-serif; font-size: 8.5pt; color: #222; line-height: 1.45; }
+
+  .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2pt solid {{ accent }}; padding-bottom: 4mm; margin-bottom: 5mm; }
+  .brand { display: flex; align-items: center; gap: 4mm; }
+  .logo { height: 13mm; }
+  .cname { font-size: 13pt; font-weight: 700; }
+  .cmeta { font-size: 7.5pt; color: #666; margin-top: 0.6mm; }
+  .head-right { text-align: right; }
+  .head-right h1 { font-size: 16pt; font-weight: 700; color: {{ accent }}; letter-spacing: 1pt; }
+  .head-right .no { font-size: 9pt; color: #555; }
+
+  .info-strip { display: flex; background: #F3F5FA; border-radius: 1.5mm; padding: 3.5mm 4mm; gap: 8mm; margin-bottom: 5mm; }
+  .info-strip .cell { flex: 1; }
+  .label { font-size: 6.2pt; letter-spacing: 1.4pt; text-transform: uppercase; color: #8b93a3; font-weight: 700; margin-bottom: 0.8mm; }
+  .info-strip .v { font-weight: 700; font-size: 9pt; }
+  .info-strip .sub { font-size: 7.5pt; color: #666; font-weight: 400; }
+
+  table.items { width: 100%; border-collapse: collapse; }
+  table.items thead { display: table-header-group; }
+  table.items th {
+    background: {{ accent }}; color: #fff; font-size: 6.8pt; letter-spacing: 1.2pt; text-transform: uppercase;
+    text-align: left; padding: 2.2mm 2.5mm; font-weight: 700;
+  }
+  table.items td { padding: 2.1mm 2.5mm; vertical-align: top; }
+  table.items tbody tr:nth-child(even) td { background: #F6F8FB; }
+  .row-idx { color: #9aa1ae; width: 6mm; }
+  .item-name { font-weight: 500; }
+  .item-details { font-size: 7.3pt; color: #7c828e; }
+  .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  th.num { text-align: right; }
+
+  .bottom { display: flex; justify-content: space-between; margin-top: 5mm; page-break-inside: avoid; }
+  .notes { width: 52%; font-size: 7.8pt; color: #555; }
+  .notes h4 { font-size: 6.5pt; letter-spacing: 1.4pt; text-transform: uppercase; color: {{ accent }}; margin: 3mm 0 0.8mm; }
+  .notes h4:first-child { margin-top: 0; }
+
+  table.totals { width: 42%; border-collapse: collapse; font-size: 8.8pt; }
+  table.totals td { padding: 1.3mm 2.5mm; }
+  table.totals .k { color: #555; }
+  table.totals .v { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  tr.grand td { background: {{ accent }}; color: #fff; font-weight: 700; font-size: 11pt; padding: 2.6mm 2.5mm; }
+  tr.grand td:first-child { border-radius: 1.5mm 0 0 1.5mm; }
+  tr.grand td:last-child { border-radius: 0 1.5mm 1.5mm 0; }
+  tr.balance td { font-weight: 700; }
+</style>
+</head>
+<body>
+
+  <div class="head">
+    <div class="brand">
+      {% if company.logo_url %}<img class="logo" src="{{ company.logo_url }}">{% endif %}
+      <div>
+        <div class="cname">{{ company.name }}</div>
+        <div class="cmeta">
+          {{ company.address_lines | join(', ') }}
+          {% if company.email %}<br>{{ company.email }}{% endif %}{% if company.phone %} · {{ company.phone }}{% endif %}{% if company.tax_id %} · {{ company.tax_id }}{% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="head-right">
+      <h1>INVOICE</h1>
+      <div class="no">{{ invoice.number }}</div>
+    </div>
+  </div>
+
+  <div class="info-strip">
+    <div class="cell" style="flex:1.6">
+      <div class="label">Bill to</div>
+      <div class="v">{{ client.name }}</div>
+      <div class="sub">{{ client.address_lines | join(', ') }}{% if client.email %} · {{ client.email }}{% endif %}</div>
+    </div>
+    <div class="cell"><div class="label">Issue date</div><div class="v">{{ invoice.issue_date }}</div></div>
+    <div class="cell"><div class="label">Due date</div><div class="v">{{ invoice.due_date }}</div></div>
+    {% if invoice.po_number %}<div class="cell"><div class="label">PO</div><div class="v">{{ invoice.po_number }}</div></div>{% endif %}
+    <div class="cell"><div class="label">Amount due</div><div class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.balance_due if totals.amount_paid else totals.total) }}</div></div>
+  </div>
+
+  <table class="items">
+    <thead>
+      <tr>
+        <th class="row-idx">#</th>
+        <th style="width:48%">Description</th>
+        <th class="num">Qty</th>
+        <th class="num">Rate</th>
+        <th class="num">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td class="row-idx">{{ loop.index }}</td>
+        <td>
+          <span class="item-name">{{ item.description }}</span>
+          {% if item.details %}<div class="item-details">{{ item.details }}</div>{% endif %}
+        </td>
+        <td class="num">{{ item.quantity }}{% if item.unit %} {{ item.unit }}{% endif %}</td>
+        <td class="num">{{ invoice.currency }}{{ '{:,.2f}'.format(item.unit_price) }}</td>
+        <td class="num">{{ invoice.currency }}{{ '{:,.2f}'.format(item.amount) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="bottom">
+    <div class="notes">
+      {% if invoice.payment_details %}
+      <h4>Payment details</h4>
+      {% if invoice.payment_details.method_label %}{{ invoice.payment_details.method_label }}<br>{% endif %}
+      {% for line in invoice.payment_details.lines %}{{ line }}<br>{% endfor %}
+      {% endif %}
+      {% if invoice.notes %}<h4>Notes</h4>{{ invoice.notes }}{% endif %}
+      {% if invoice.terms %}<h4>Terms</h4>{{ invoice.terms }}{% endif %}
+    </div>
+    <table class="totals">
+      <tr><td class="k">Subtotal</td><td class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.subtotal) }}</td></tr>
+      {% if totals.discount %}<tr><td class="k">{{ totals.discount_label | default('Discount', true) }}</td><td class="v">-{{ invoice.currency }}{{ '{:,.2f}'.format(totals.discount) }}</td></tr>{% endif %}
+      {% if totals.tax %}<tr><td class="k">{{ totals.tax_label | default('Tax', true) }}</td><td class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.tax) }}</td></tr>{% endif %}
+      {% if totals.shipping %}<tr><td class="k">Shipping</td><td class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.shipping) }}</td></tr>{% endif %}
+      <tr class="grand"><td>TOTAL</td><td class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.total) }}</td></tr>
+      {% if totals.amount_paid %}
+      <tr><td class="k">Amount paid</td><td class="v">-{{ invoice.currency }}{{ '{:,.2f}'.format(totals.amount_paid) }}</td></tr>
+      <tr class="balance"><td>Balance due</td><td class="v">{{ invoice.currency }}{{ '{:,.2f}'.format(totals.balance_due) }}</td></tr>
+      {% endif %}
+    </table>
+  </div>
+
+</body>
+</html>

@@ -73,7 +73,7 @@
     }
 
     .body {
-      padding: 40px;
+      padding: 40px 40px 12px;
     }
 
     .client-wrapper {
@@ -185,7 +185,7 @@
     }
 
     .footer {
-      padding: 25px 40px;
+      padding: 12px 40px;
       border-top: 1px solid #e5e7eb;
       background: #f9fafb;
     }
@@ -253,11 +253,11 @@
         <tbody>
           {% for item in items %}
           <tr>
-            <td>{{ item.name }}</td>
             <td>{{ item.description }}</td>
+            <td>{{ item.details or '' }}</td>
             <td class="text-right">{{ item.quantity }}</td>
-            <td class="text-right">{{ item.unit_price }}</td>
-            <td class="text-right">{{ item.total }}</td>
+            <td class="text-right">{{ invoice.currency }}{{ '{:,.2f}'.format(item.unit_price) }}</td>
+            <td class="text-right">{{ invoice.currency }}{{ '{:,.2f}'.format(item.amount) }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -267,10 +267,9 @@
         <div class="payment-info">
           <h4>Payment Information</h4>
           <p>
-            <strong>Bank:</strong> {{ payment.bank_name }}<br />
-            <strong>Account Name:</strong> {{ payment.account_name }}<br />
-            <strong>Account Number:</strong> {{ payment.account_number }}<br />
-            <strong>Payment Terms:</strong> {{ payment.terms }}
+            <strong>Status:</strong> {{ invoice.status }}<br />
+            <strong>Amount Paid:</strong> {{ invoice.currency }}{{ '{:,.2f}'.format(totals.amount_paid) }}<br />
+            <strong>Balance Due:</strong> {{ invoice.currency }}{{ '{:,.2f}'.format(totals.balance_due) }}
           </p>
         </div>
 
@@ -278,19 +277,19 @@
           <h4>Summary</h4>
           <div class="totals-row">
             <span>Subtotal</span>
-            <span>{{ totals.subtotal }}</span>
+            <span>{{ invoice.currency }}{{ '{:,.2f}'.format(totals.subtotal) }}</span>
           </div>
           <div class="totals-row">
             <span>Tax</span>
-            <span>{{ totals.tax }}</span>
+            <span>{{ invoice.currency }}{{ '{:,.2f}'.format(totals.tax) }}</span>
           </div>
           <div class="totals-row">
             <span>Discount</span>
-            <span>{{ totals.discount }}</span>
+            <span>{{ invoice.currency }}{{ '{:,.2f}'.format(totals.discount) }}</span>
           </div>
           <div class="totals-row total">
             <span>Total Due</span>
-            <span>{{ totals.grand_total }}</span>
+            <span>{{ invoice.currency }}{{ '{:,.2f}'.format(totals.total) }}</span>
           </div>
         </div>
       </div>
