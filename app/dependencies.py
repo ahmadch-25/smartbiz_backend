@@ -2,6 +2,7 @@ from uuid import UUID
 
 from fastapi import Header, HTTPException, status
 
+from app.constants.invoice_templates import INVOICE_TEMPLATE_DIR
 from app.services.pdf_service import PdfService
 
 
@@ -22,4 +23,4 @@ def get_device_id(x_device_id: str | None = Header(default=None)) -> str:
 
 
 def get_pdf_service() -> PdfService:
-    return PdfService(templates_dir="app/templates/invoices")
+    return PdfService(templates_dir=INVOICE_TEMPLATE_DIR)

@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 from app.core.config import settings
-from app.db.database import engine
+from app.db.database import SessionLocal, engine
 from app.routers.invoice_templates import router as invoice_templates_router
 from app.routers.ai_invoices import router as ai_invoices_router
 from app.routers.clients import router as clients_router
@@ -16,6 +16,8 @@ from app.routers.company_settings import router as company_settings_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.invoices import router as invoices_router
 from app.routers.payments import router as payments_router
+from app.routers.ai_agent import router as agent_router
+from app.services.seed_invoice_templates import seed_invoice_templates
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,10 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     with engine.connect() as connection:
         connection.execute(text("SELECT 1"))
+    with SessionLocal() as db:
+        created_templates = seed_invoice_templates(db)
+    if created_templates:
+        logger.info("Added %s invoice templates", created_templates)
     print("Database connected successfully.")
     yield
     print("Application shutdown.")
@@ -45,6 +51,7 @@ app.include_router(dashboard_router)
 app.include_router(invoices_router)
 app.include_router(invoice_templates_router)
 app.include_router(payments_router)
+app.include_router(agent_router)
 
 
 def error_response(status_code: int, message: str, result=None) -> JSONResponse:

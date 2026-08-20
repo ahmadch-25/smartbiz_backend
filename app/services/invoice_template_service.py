@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.constants.invoice_templates import INVOICE_TEMPLATE_FILES
 from app.models.invoice_template import InvoiceTemplate
 from app.schemas.invoice_template import InvoiceTemplateCreate, InvoiceTemplateUpdate
 
@@ -13,7 +14,10 @@ class DuplicateTemplateKeyError(ValueError):
 def get_active_invoice_templates(db: Session) -> list[InvoiceTemplate]:
     statement = (
         select(InvoiceTemplate)
-        .where(InvoiceTemplate.is_active.is_(True))
+        .where(
+            InvoiceTemplate.is_active.is_(True),
+            InvoiceTemplate.key.in_(INVOICE_TEMPLATE_FILES),
+        )
         .order_by(InvoiceTemplate.id.asc())
     )
     return list(db.scalars(statement).all())
@@ -78,7 +82,6 @@ def soft_delete_invoice_template(db: Session, template_id: int) -> bool:
     if template is None:
         return False
 
-    # template.is_active = False
-    db.delete(template)
+    template.is_active = False
     db.commit()
     return True

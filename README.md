@@ -210,6 +210,33 @@ DELETE /invoice-templates/{template_id}
 GET    /invoice-templates/preview/{template_key}
 ```
 
+The template catalog is synchronized from the backend registry when the service
+starts. Existing keys remain supported, and the following additional keys are
+available without changing the API request or response shape:
+
+```text
+01_classic_ledger
+02_swiss_minimal
+03_bold_band
+04_sidebar_slate
+05_compact_pro
+06_warm_studio
+07_contractor_grid
+08_executive_noir
+09_aurora_edge
+10_monogram_fine
+```
+
+Clients that populate the template picker from `GET /invoice-templates` and pass
+the selected `key` to `preview-pdf` do not require an integration change.
+
+The templates include safe font fallbacks. For the closest match to the bundled
+preview images on Ubuntu, install the intended font families:
+
+```bash
+sudo apt-get install -y fonts-inter fonts-lato fonts-ebgaramond fonts-open-sans fonts-roboto
+```
+
 ### AI Invoice Draft
 
 Requires `X-Device-Id`.

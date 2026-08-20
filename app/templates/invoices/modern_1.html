@@ -249,11 +249,11 @@
         <tbody>
           {% for item in items %}
           <tr>
-            <td>{{ item.name }}</td>
             <td>{{ item.description }}</td>
+            <td>{{ item.details or '' }}</td>
             <td class="text-right">{{ item.quantity }}</td>
-            <td class="text-right">{{ item.unit_price }}</td>
-            <td class="text-right">{{ item.total }}</td>
+            <td class="text-right">{{ invoice.currency }}{{ '{:,.2f}'.format(item.unit_price) }}</td>
+            <td class="text-right">{{ invoice.currency }}{{ '{:,.2f}'.format(item.amount) }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -262,19 +262,19 @@
       <div class="summary">
         <div class="summary-row">
           <span>Subtotal</span>
-          <span>{{ totals.subtotal }}</span>
+          <span>{{ invoice.currency }}{{ '{:,.2f}'.format(totals.subtotal) }}</span>
         </div>
         <div class="summary-row">
           <span>Tax</span>
-          <span>{{ totals.tax }}</span>
+          <span>{{ invoice.currency }}{{ '{:,.2f}'.format(totals.tax) }}</span>
         </div>
         <div class="summary-row">
           <span>Discount</span>
-          <span>{{ totals.discount }}</span>
+          <span>{{ invoice.currency }}{{ '{:,.2f}'.format(totals.discount) }}</span>
         </div>
         <div class="summary-row total">
           <span>Grand Total</span>
-          <span>{{ totals.grand_total }}</span>
+          <span>{{ invoice.currency }}{{ '{:,.2f}'.format(totals.total) }}</span>
         </div>
       </div>
 

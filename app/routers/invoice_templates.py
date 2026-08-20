@@ -1,9 +1,13 @@
-from pathlib import Path
-
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi.responses import HTMLResponse
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from sqlalchemy.orm import Session
 
+from app.constants.dummy_template_context import SAMPLE_PREVIEW_CONTEXT
+from app.constants.invoice_templates import (
+    INVOICE_TEMPLATE_DIR,
+    INVOICE_TEMPLATE_FILES,
+)
 from app.db.database import get_db
 from app.schemas.invoice_template import (
     ApiResponse,
@@ -19,19 +23,21 @@ from app.services.template_preview_service import generate_template_preview_task
 
 router = APIRouter(prefix="/invoice-templates", tags=["Invoice Templates"])
 
-TEMPLATE_FILES = {
-    "modern_1": "modern_1.html",
-    "minimal_1": "minimal_1.html",
-    "corporate_1": "corporate_1.html",
-}
-INVOICE_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates" / "invoices"
+TEMPLATE_FILES = INVOICE_TEMPLATE_FILES
+PREVIEW_ENVIRONMENT = Environment(
+    loader=FileSystemLoader(str(INVOICE_TEMPLATE_DIR)),
+    autoescape=select_autoescape(["html", "xml"]),
+)
 
 
 def build_invoice_template_response(template, request: Request) -> InvoiceTemplateOut:
     preview_image = None
     if template.preview_image:
-        static_path = template.preview_image.removeprefix("/static/")
-        preview_image = str(request.url_for("static", path=static_path))
+        if template.preview_image.startswith("/static/"):
+            static_path = template.preview_image.removeprefix("/static/")
+            preview_image = str(request.url_for("static", path=static_path))
+        else:
+            preview_image = template.preview_image
 
     return InvoiceTemplateOut(
         id=template.id,
@@ -63,8 +69,8 @@ def preview_invoice_template(template_key: str):
             detail="Invoice template preview not found",
         )
 
-    template_path = INVOICE_TEMPLATE_DIR / template_file
-    return HTMLResponse(template_path.read_text(encoding="utf-8"))
+    template = PREVIEW_ENVIRONMENT.get_template(template_file)
+    return HTMLResponse(template.render(**SAMPLE_PREVIEW_CONTEXT))
 
 
 @router.get("/{template_id}", response_model=InvoiceTemplateResponse)
